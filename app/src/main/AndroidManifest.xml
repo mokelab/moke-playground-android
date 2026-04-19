@@ -10,9 +10,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MokePlayground">
+        android:theme="@style/Theme.MokePlayground"
+        android:name=".PlaygroundApplication"
+        >
         <activity
-            android:name=".MainActivity"
+            android:name="com.mokelab.android.devportal.DevPortalActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.MokePlayground">
