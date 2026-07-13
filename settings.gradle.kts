@@ -29,4 +29,5 @@ dependencyResolutionManagement {
 rootProject.name = "MokePlayground"
 include(":app")
 // include(":feature:compose:webview:form")
-//include(":feature:m3:calendar")
+// include(":feature:m3:calendar")
+// include(":feature:compose:foundation:flexbox")
