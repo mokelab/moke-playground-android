@@ -22,6 +22,37 @@ A playground for experimenting with Android APIs (Compose, Material3, and friend
 
 Always declare dependency versions in the version catalog (`gradle/libs.versions.toml`). DevPortal is resolved from its own Maven repository, `https://mokelab.github.io/android-devportal/repo`, already declared in `settings.gradle.kts`.
 
+## Build logic (convention plugins)
+
+Every module's `android {}` build settings live in convention plugins under `build-logic/`, an included build wired up by `includeBuild("build-logic")` inside `pluginManagement {}` in `settings.gradle.kts`. Modules apply them by alias from the catalog:
+
+| plugin id | catalog alias | what it does |
+|---|---|---|
+| `mokelab.android.application` | `libs.plugins.mokelab.android.application` | `com.android.application` + common settings + `targetSdk = 36` |
+| `mokelab.android.application.compose` | `libs.plugins.mokelab.android.application.compose` | above + Compose |
+| `mokelab.android.library` | `libs.plugins.mokelab.android.library` | `com.android.library` + common settings |
+| `mokelab.android.library.compose` | `libs.plugins.mokelab.android.library.compose` | above + Compose |
+| `mokelab.hilt` | `libs.plugins.mokelab.hilt` | applies KSP + the Hilt Gradle plugin |
+
+Common settings = `compileSdk 36.1` / `minSdk 24` / `targetSdk 36` / `testInstrumentationRunner` / Java 17, applied from `build-logic/convention/src/main/kotlin/com/mokelab/playground/KotlinAndroid.kt`. The SDK and Java levels themselves are constants in `AndroidConfig.kt` next to it — change them there, not in a module.
+
+The `.compose` variants additionally add the Compose base dependencies (`AndroidCompose.kt`), so a module applying them must **not** declare these itself:
+
+```
+implementation(platform(libs.androidx.compose.bom))    androidTestImplementation(platform(...))
+implementation(libs.androidx.compose.ui)
+implementation(libs.androidx.compose.ui.graphics)
+implementation(libs.androidx.compose.ui.tooling.preview)
+implementation(libs.androidx.compose.material3)
+debugImplementation(libs.androidx.compose.ui.tooling)          // @Preview rendering
+debugImplementation(libs.androidx.compose.ui.test.manifest)
+androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+```
+
+Anything beyond that base — `material-icons`, `activity-compose` — stays in the module's own `dependencies {}`. Apart from those Compose lines the convention plugins configure only `android {}`: Hilt's `hilt.android` / `ksp(hilt.compiler)` and module-local file references (`consumerProguardFiles`, `buildTypes { release { proguardFiles(...) } }`) all stay in the module.
+
+`build-logic/convention/build.gradle.kts` declares the AGP/Kotlin/KSP/Hilt Gradle plugins as `compileOnly`; the actual implementations reach the buildscript classpath through the `alias(...) apply false` lines in the root `build.gradle.kts`, so those must stay.
+
 ## Architecture
 
 **There is no MainActivity.** The launcher activity is `com.mokelab.android.devportal.DevPortalActivity`, provided by the DevPortal library and declared in `app/src/main/AndroidManifest.xml`. The app module only owns `PlaygroundApplication` (`@HiltAndroidApp`); every screen lives in a feature module.
@@ -61,7 +92,7 @@ implementation(projects.feature.compose.foundation.style)
 ## Adding a new feature
 
 1. Create the module under `feature/<area>/<name>/` (e.g. `feature/compose/foundation/flexbox`, `feature/m3/calendar`).
-2. Copy `build.gradle.kts` from an existing feature: `android-library` + `kotlin-compose` + `ksp` + `hilt`, namespace `com.mokelab.playground.feature.<area>.<name>`, minSdk 24 / compileSdk 36, Java 17 (`feature/compose/foundation/style` and `.../flexbox` are still on Java 11 — copy from `feature/m3/calendar` instead). Keep `implementation(projects.core.devportal)` — that is what brings in `DevPortalFeature` and `singleScreenFeature`.
+2. Copy `build.gradle.kts` from an existing feature (`feature/m3/calendar` is the reference). It applies `libs.plugins.mokelab.android.library.compose` + `libs.plugins.mokelab.hilt`, and the only thing to change in `android {}` is `namespace = "com.mokelab.playground.feature.<area>.<name>"` — SDK levels, Java 17 and Compose come from the convention plugin. Keep `implementation(projects.core.devportal)` — that is what brings in `DevPortalFeature` and `singleScreenFeature`.
 3. Add `XxxScreen.kt` and `Module.kt` following the pattern above.
 4. Register the module in `settings.gradle.kts` and `app/build.gradle.kts`, verify it runs, then comment both lines back out. `include(":core:devportal")` stays uncommented.
 
