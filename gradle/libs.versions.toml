@@ -45,9 +45,23 @@ logcat-core = { module = "com.mokelab.android.devportal:logcat-core", version.re
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
+# build-logic の convention plugin から使う Gradle プラグイン本体
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+compose-gradlePlugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
+ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+hilt-gradlePlugin = { group = "com.google.dagger", name = "hilt-android-gradle-plugin", version.ref = "hilt" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+
+# build-logic の convention plugin
+mokelab-android-application = { id = "mokelab.android.application", version = "unspecified" }
+mokelab-android-application-compose = { id = "mokelab.android.application.compose", version = "unspecified" }
+mokelab-android-library = { id = "mokelab.android.library", version = "unspecified" }
+mokelab-android-library-compose = { id = "mokelab.android.library.compose", version = "unspecified" }
+mokelab-hilt = { id = "mokelab.hilt", version = "unspecified" }
