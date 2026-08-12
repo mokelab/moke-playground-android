@@ -26,28 +26,26 @@ Always declare dependency versions in the version catalog (`gradle/libs.versions
 
 **There is no MainActivity.** The launcher activity is `com.mokelab.android.devportal.DevPortalActivity`, provided by the DevPortal library and declared in `app/src/main/AndroidManifest.xml`. The app module only owns `PlaygroundApplication` (`@HiltAndroidApp`); every screen lives in a feature module.
 
-Each feature module contributes a `DevPortalFeature` from its `Module.kt` via Hilt's `@IntoSet`. DevPortal collects that set to build its menu and renders each screen as a navigation3 entry. The established pattern (see `feature/compose/foundation/style/src/main/java/.../Module.kt` and `feature/m3/calendar/src/main/java/.../Module.kt`):
+Each feature module contributes a `DevPortalFeature` from its `Module.kt` via Hilt's `@IntoSet`. DevPortal collects that set to build its menu and renders each screen as a navigation3 entry.
+
+For a feature with a **single screen** — the common case — use `singleScreenFeature()` from `:core:devportal` and the whole `Module.kt` is this (see `feature/m3/calendar/src/main/java/.../Module.kt`):
 
 ```kotlin
-object Root
-
 @Module
 @InstallIn(ActivityRetainedComponent::class)
 object XxxModule {
     @IntoSet
     @Provides
-    fun provideXxxFeature(navigator: DevPortalNavigator): DevPortalFeature =
-        object : DevPortalFeature {
-            override val name: String = "Name shown in the menu"
-            override val installer: EntryProviderScope<Any>.() -> Unit = {
-                entry<Root> { XxxScreen(back = { navigator.goBack() }) }
-            }
-            override val root: Any get() = Root
-        }
+    fun provideFeature(navigator: DevPortalNavigator): DevPortalFeature =
+        singleScreenFeature("Name shown in the menu", navigator) { back -> XxxScreen(back = back) }
 }
 ```
 
-Screen composables are declared as `internal fun XxxScreen(back: () -> Unit)` and wrap their content in a `Scaffold` with a `TopAppBar`. DevPortal is a `debugImplementation` dependency only (`libs.devportal.api` in feature modules; `libs.devportal` plus the logcat modules in `app`), so it never ships in a release build.
+The helper lives in `core/devportal/src/debug/java/com/mokelab/playground/core/devportal/SingleScreenFeature.kt` — `src/debug`, not `src/main`, because `:core:devportal` is always included in the build and its release variant must not reference DevPortal. It builds the navigation3 entry from a `FeatureKey(id)` **instance** key (`entry(key)`, not the reified `entry<T>`), so every feature can share one key type without declaring its own `object Root`. The `id` defaults to the menu name; **two enabled features with the same name crash at startup** with `An 'entry' with the key 'key' has already been added` — pass a distinct `id` to work around it. Never register `entry<FeatureKey>` (the class-key overload) anywhere: `EntryProviderScope.build()` resolves class keys first and would shadow every instance key.
+
+Features that need **more than one screen** skip the helper and implement `DevPortalFeature` directly with their own key type and `entry<T>`; both styles coexist.
+
+Screen composables are declared as `internal fun XxxScreen(back: () -> Unit)` and wrap their content in a `Scaffold` with a `TopAppBar`. Feature modules depend on `projects.core.devportal`, which pulls `libs.devportal.api` in through `debugApi` — so DevPortal reaches the debug compile classpath and never the release one (`app` uses `debugImplementation(libs.devportal)` plus the logcat modules). Note that because `Module.kt` sits in `src/main`, a feature module only compiles in the debug variant; that is why every feature stays commented out in committed state.
 
 ## Enabling / disabling a feature
 
@@ -63,8 +61,8 @@ implementation(projects.feature.compose.foundation.style)
 ## Adding a new feature
 
 1. Create the module under `feature/<area>/<name>/` (e.g. `feature/compose/foundation/flexbox`, `feature/m3/calendar`).
-2. Copy `build.gradle.kts` from an existing feature: `android-library` + `kotlin-compose` + `ksp` + `hilt`, namespace `com.mokelab.playground.feature.<area>.<name>`, minSdk 24 / compileSdk 36, Java 11 (only `app` uses Java 17).
+2. Copy `build.gradle.kts` from an existing feature: `android-library` + `kotlin-compose` + `ksp` + `hilt`, namespace `com.mokelab.playground.feature.<area>.<name>`, minSdk 24 / compileSdk 36, Java 17 (`feature/compose/foundation/style` and `.../flexbox` are still on Java 11 — copy from `feature/m3/calendar` instead). Keep `implementation(projects.core.devportal)` — that is what brings in `DevPortalFeature` and `singleScreenFeature`.
 3. Add `XxxScreen.kt` and `Module.kt` following the pattern above.
-4. Register the module in `settings.gradle.kts` and `app/build.gradle.kts`, verify it runs, then comment both lines back out.
+4. Register the module in `settings.gradle.kts` and `app/build.gradle.kts`, verify it runs, then comment both lines back out. `include(":core:devportal")` stays uncommented.
 
 Work happens on `feature/<name>` branches and lands on `main` through pull requests (per the git history).
