@@ -61,7 +61,7 @@ implementation(projects.feature.compose.foundation.style)
 ## Adding a new feature
 
 1. Create the module under `feature/<area>/<name>/` (e.g. `feature/compose/foundation/flexbox`, `feature/m3/calendar`).
-2. Copy `build.gradle.kts` from an existing feature: `android-library` + `kotlin-compose` + `ksp` + `hilt`, namespace `com.mokelab.playground.feature.<area>.<name>`, minSdk 24 / compileSdk 36, Java 11 (only `app` uses Java 17). Keep `implementation(projects.core.devportal)` — that is what brings in `DevPortalFeature` and `singleScreenFeature`.
+2. Copy `build.gradle.kts` from an existing feature: `android-library` + `kotlin-compose` + `ksp` + `hilt`, namespace `com.mokelab.playground.feature.<area>.<name>`, minSdk 24 / compileSdk 36, Java 17 (`feature/compose/foundation/style` and `.../flexbox` are still on Java 11 — copy from `feature/m3/calendar` instead). Keep `implementation(projects.core.devportal)` — that is what brings in `DevPortalFeature` and `singleScreenFeature`.
 3. Add `XxxScreen.kt` and `Module.kt` following the pattern above.
 4. Register the module in `settings.gradle.kts` and `app/build.gradle.kts`, verify it runs, then comment both lines back out. `include(":core:devportal")` stays uncommented.
 
