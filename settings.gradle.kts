@@ -30,6 +30,7 @@ dependencyResolutionManagement {
 rootProject.name = "MokePlayground"
 include(":app")
 include(":core:devportal")
+include(":core:ui")
 
 // Feature modules to try are listed in local.properties, e.g.
 //   features=compose:foundation:flexbox,compose:foundation:style
