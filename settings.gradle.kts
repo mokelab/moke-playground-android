@@ -30,8 +30,22 @@ dependencyResolutionManagement {
 rootProject.name = "MokePlayground"
 include(":app")
 include(":core:devportal")
-// include(":feature:compose:webview:form")
-// include(":feature:m3:calendar")
-// include(":feature:compose:foundation:flexbox")
-// include(":feature:compose:foundation:style")
-// include(":feature:m3:textfield")
+
+// Feature modules to try are listed in local.properties, e.g.
+//   features=compose:foundation:flexbox,compose:foundation:style
+val enabledFeatures: List<String> = java.util.Properties().run {
+    val file = settingsDir.resolve("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+    getProperty("features").orEmpty()
+        .split(',')
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+}
+enabledFeatures.forEach { name ->
+    val dir = settingsDir.resolve("feature/" + name.replace(':', '/'))
+    require(dir.resolve("build.gradle.kts").exists()) {
+        "local.properties: feature '$name' listed in 'features' was not found ($dir)"
+    }
+    include(":feature:$name")
+}
+gradle.extra["playground.features"] = enabledFeatures

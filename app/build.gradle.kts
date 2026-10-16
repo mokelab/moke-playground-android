@@ -24,11 +24,11 @@ android {
 }
 
 dependencies {
-    // implementation(projects.feature.compose.webview.form)
-    // implementation(projects.feature.m3.calendar)
-    // implementation(projects.feature.compose.foundation.flexbox)
-    // implementation(projects.feature.compose.foundation.style)
-    // implementation(projects.feature.m3.textfield)
+    // Enabled via `features=` in local.properties (see settings.gradle.kts)
+    @Suppress("UNCHECKED_CAST")
+    (gradle.extra["playground.features"] as List<String>).forEach { name ->
+        implementation(project(":feature:$name"))
+    }
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
