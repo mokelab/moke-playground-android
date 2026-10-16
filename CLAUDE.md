@@ -76,24 +76,23 @@ The helper lives in `core/devportal/src/debug/java/com/mokelab/playground/core/d
 
 Features that need **more than one screen** skip the helper and implement `DevPortalFeature` directly with their own key type and `entry<T>`; both styles coexist.
 
-Screen composables are declared as `internal fun XxxScreen(back: () -> Unit)` and wrap their content in a `Scaffold` with a `TopAppBar`. Feature modules depend on `projects.core.devportal`, which pulls `libs.devportal.api` in through `debugApi` — so DevPortal reaches the debug compile classpath and never the release one (`app` uses `debugImplementation(libs.devportal)` plus the logcat modules). Note that because `Module.kt` sits in `src/main`, a feature module only compiles in the debug variant; that is why every feature stays commented out in committed state.
+Screen composables are declared as `internal fun XxxScreen(back: () -> Unit)` and wrap their content in a `Scaffold` with a `TopAppBar`. Feature modules depend on `projects.core.devportal`, which pulls `libs.devportal.api` in through `debugApi` — so DevPortal reaches the debug compile classpath and never the release one (`app` uses `debugImplementation(libs.devportal)` plus the logcat modules). Note that because `Module.kt` sits in `src/main`, a feature module only compiles in the debug variant; that is why features are opt-in per developer via `local.properties` (below) and none is enabled by default.
 
 ## Enabling / disabling a feature
 
-In `settings.gradle.kts` the `include(":feature:...")` lines and in `app/build.gradle.kts` the `implementation(projects.feature....)` lines are **all commented out in committed state** (check HEAD). Uncomment both lines for the feature you want to try, build, then comment them back out before committing.
+Features are enabled per checkout with a `features` entry in `local.properties` (git-ignored), comma-separated, each being the module path under `feature/` with `:` separators:
 
-```kotlin
-// settings.gradle.kts
-include(":feature:compose:foundation:style")
-// app/build.gradle.kts   — TYPESAFE_PROJECT_ACCESSORS is enabled
-implementation(projects.feature.compose.foundation.style)
+```properties
+features=compose:foundation:flexbox,compose:foundation:style
 ```
+
+`settings.gradle.kts` reads it, `include`s `:feature:<name>` for each entry (failing fast if `feature/<path>/build.gradle.kts` doesn't exist), and hands the list to `app/build.gradle.kts` through `gradle.extra["playground.features"]`, which adds `implementation(project(":feature:<name>"))` for each — typesafe accessors can't be used for this dynamic list. Re-sync Gradle after editing `local.properties`. Since feature modules compile only in debug, release builds require `features` to be empty/absent. Neither build script needs editing to switch features.
 
 ## Adding a new feature
 
 1. Create the module under `feature/<area>/<name>/` (e.g. `feature/compose/foundation/flexbox`, `feature/m3/calendar`).
 2. Copy `build.gradle.kts` from an existing feature (`feature/m3/calendar` is the reference). It applies `libs.plugins.mokelab.android.library.compose` + `libs.plugins.mokelab.hilt`, and the only thing to change in `android {}` is `namespace = "com.mokelab.playground.feature.<area>.<name>"` — SDK levels, Java 17 and Compose come from the convention plugin. Keep `implementation(projects.core.devportal)` — that is what brings in `DevPortalFeature` and `singleScreenFeature`.
 3. Add `XxxScreen.kt` and `Module.kt` following the pattern above.
-4. Register the module in `settings.gradle.kts` and `app/build.gradle.kts`, verify it runs, then comment both lines back out. `include(":core:devportal")` stays uncommented.
+4. Add it to `features=` in `local.properties` and verify it runs. No change to `settings.gradle.kts` / `app/build.gradle.kts` is needed. Also add it to the feature list in `README.md`.
 
 Work happens on `feature/<name>` branches and lands on `main` through pull requests (per the git history).
