@@ -1,6 +1,7 @@
 package com.mokelab.playground.feature.notification.channel
 
 import android.annotation.SuppressLint
+import android.service.notification.NotificationListenerService
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -132,6 +133,7 @@ private fun StatusSection(snapshot: ChannelSnapshot) {
         Text("$DEMO_CHANNEL_ID: なし")
     } else {
         Text("$DEMO_CHANNEL_ID: name=${demo.name}, importance=${importanceName(demo.importance)}")
+        UserControlledStatus(demo, snapshot)
     }
     if (snapshot.groups.isEmpty()) {
         Text("グループ: なし")
@@ -216,18 +218,44 @@ private fun DeleteSection(
     }
 }
 
+// アプリからは指定できない（指定しても無視される）か、ユーザーが変更できる項目。設定画面で変えて戻ると値が変わる
+@Composable
+private fun UserControlledStatus(channel: NotificationChannelCompat, snapshot: ChannelSnapshot) {
+    Text("  canBypassDnd=${channel.canBypassDnd()}")
+    Text("  lockscreenVisibility=${visibilityName(channel.lockscreenVisibility)}")
+    Text("  canShowBadge=${channel.canShowBadge()}")
+    Text("  canBubble=${channel.canBubble()}")
+    Text("  isImportantConversation=${channel.isImportantConversation}")
+    Text("  hasUserSetImportance=${snapshot.hasUserSetImportance ?: "API 29 以上"}")
+    Text("  hasUserSetSound=${snapshot.hasUserSetSound ?: "API 30 以上"}")
+}
+
 private data class ChannelSnapshot(
     val notificationsEnabled: Boolean,
     val demoChannel: NotificationChannelCompat?,
     val groups: List<NotificationChannelGroupCompat>,
+    // NotificationChannelCompat には無いので、プラットフォームの NotificationChannel から読む
+    val hasUserSetImportance: Boolean?,
+    val hasUserSetSound: Boolean?,
 )
 
 private fun loadSnapshot(context: Context): ChannelSnapshot {
     val manager = NotificationManagerCompat.from(context)
+    val platformChannel = manager.getNotificationChannel(DEMO_CHANNEL_ID)
     return ChannelSnapshot(
         notificationsEnabled = manager.areNotificationsEnabled(),
         demoChannel = manager.getNotificationChannelCompat(DEMO_CHANNEL_ID),
         groups = manager.notificationChannelGroupsCompat,
+        hasUserSetImportance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            platformChannel?.hasUserSetImportance()
+        } else {
+            null
+        },
+        hasUserSetSound = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            platformChannel?.hasUserSetSound()
+        } else {
+            null
+        },
     )
 }
 
@@ -296,4 +324,13 @@ private fun importanceName(importance: Int): String = when (importance) {
     NotificationManagerCompat.IMPORTANCE_DEFAULT -> "DEFAULT"
     NotificationManagerCompat.IMPORTANCE_HIGH -> "HIGH"
     else -> "UNSPECIFIED($importance)"
+}
+
+private fun visibilityName(visibility: Int): String = when (visibility) {
+    NotificationCompat.VISIBILITY_PUBLIC -> "PUBLIC"
+    NotificationCompat.VISIBILITY_PRIVATE -> "PRIVATE"
+    NotificationCompat.VISIBILITY_SECRET -> "SECRET"
+    // ユーザーが変更していなければこの値
+    NotificationListenerService.Ranking.VISIBILITY_NO_OVERRIDE -> "NO_OVERRIDE"
+    else -> "UNKNOWN($visibility)"
 }
