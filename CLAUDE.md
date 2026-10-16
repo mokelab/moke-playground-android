@@ -28,13 +28,13 @@ Every module's `android {}` build settings live in convention plugins under `bui
 
 | plugin id | catalog alias | what it does |
 |---|---|---|
-| `mokelab.android.application` | `libs.plugins.mokelab.android.application` | `com.android.application` + common settings + `targetSdk = 36` |
+| `mokelab.android.application` | `libs.plugins.mokelab.android.application` | `com.android.application` + common settings + `targetSdk = 37` |
 | `mokelab.android.application.compose` | `libs.plugins.mokelab.android.application.compose` | above + Compose |
 | `mokelab.android.library` | `libs.plugins.mokelab.android.library` | `com.android.library` + common settings |
 | `mokelab.android.library.compose` | `libs.plugins.mokelab.android.library.compose` | above + Compose |
 | `mokelab.hilt` | `libs.plugins.mokelab.hilt` | applies KSP + the Hilt Gradle plugin |
 
-Common settings = `compileSdk 36.1` / `minSdk 24` / `targetSdk 36` / `testInstrumentationRunner` / Java 17, applied from `build-logic/convention/src/main/kotlin/com/mokelab/playground/KotlinAndroid.kt`. The SDK and Java levels themselves are constants in `AndroidConfig.kt` next to it — change them there, not in a module.
+Common settings = `compileSdk 37.0` / `minSdk 24` / `targetSdk 37` / `testInstrumentationRunner` / Java 17, applied from `build-logic/convention/src/main/kotlin/com/mokelab/playground/KotlinAndroid.kt`. The SDK and Java levels themselves are constants in `AndroidConfig.kt` next to it — change them there, not in a module.
 
 The `.compose` variants additionally add the Compose base dependencies (`AndroidCompose.kt`), so a module applying them must **not** declare these itself:
 
