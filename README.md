@@ -31,6 +31,7 @@ A name that doesn't match a module fails the build immediately with an error poi
 | `compose:webview:form` | WebView form(Compose) |
 | `m3:calendar` | M3 Calendar |
 | `m3:textfield` | M3 TextFieldState |
+| `notification:permission` | Notification Permission |
 
 ## Adding a feature
 
