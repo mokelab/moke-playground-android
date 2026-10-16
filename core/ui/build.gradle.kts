@@ -7,7 +7,8 @@ android {
 }
 
 dependencies {
-    // @Composable が公開シグネチャに出るので api
+    // @Composable / Modifier が公開シグネチャに出るので api
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.runtime)
+    api(libs.androidx.compose.ui)
 }
