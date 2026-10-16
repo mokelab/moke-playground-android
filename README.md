@@ -32,6 +32,7 @@ A name that doesn't match a module fails the build immediately with an error poi
 | `m3:calendar` | M3 Calendar |
 | `m3:textfield` | M3 TextFieldState |
 | `notification:basic` | Basic Notification |
+| `notification:channel` | Notification Channel |
 | `notification:permission` | Notification Permission |
 
 ## Adding a feature
